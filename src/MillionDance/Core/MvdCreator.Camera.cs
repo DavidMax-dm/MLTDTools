@@ -71,6 +71,12 @@ namespace OpenMLTD.MillionDance.Core {
             var scaleToVmdSize = _conversionConfig.ScaleToVmdSize;
             var unityToVmdScale = _scalingConfig.ScaleUnityToVmd;
 
+            // [V6 Logic] State for Euler Unwrapping
+            Vector3 lastEuler = Vector3.Zero;
+            bool isFirstFrame = true;
+            int lastCutValue = -1;
+            CameraAnimation lastAnimationSource = null;
+
             for (var mltdFrameIndex = 0; mltdFrameIndex < animationFrameCount; ++mltdFrameIndex) {
                 if (transform60FpsTo30Fps) {
                     if (mltdFrameIndex % 2 == 1) {
@@ -139,6 +145,30 @@ namespace OpenMLTD.MillionDance.Core {
 
                 var rotation = CameraOrientation.ComputeMmdOrientation(in q, motionFrame.AngleZ);
 
+                // [V6 Logic] Euler Unwrapping
+                // Detect cuts to reset the unwrap state
+                bool isCut = false;
+                if (!isFirstFrame) {
+                    // If we switched from Main to Appeal (or vice versa), consider it a cut
+                    if (animation != lastAnimationSource) isCut = true;
+                    // If the 'cut' property in the motion file changed, it is a cut
+                    if (motionFrame.Cut != lastCutValue) isCut = true;
+                }
+
+                if (isFirstFrame || isCut) {
+                    // Reset or initialize
+                    lastEuler = rotation;
+                } else {
+                    // Unwrap to ensure continuity (prevent spinning)
+                    rotation = UnwrapEuler(lastEuler, rotation);
+                    lastEuler = rotation;
+                }
+
+                // Update state for next iteration
+                lastAnimationSource = animation;
+                lastCutValue = motionFrame.Cut;
+                if (isFirstFrame) isFirstFrame = false;
+
                 mvdFrame.Rotation = rotation;
 
                 // MVD has good support of dynamic FOV. So here we can animate its value.
@@ -149,6 +179,24 @@ namespace OpenMLTD.MillionDance.Core {
             }
 
             return cameraFrameList.ToArray();
+        }
+        
+        // [V6 Logic] Helper to unwrap Vector3 Euler angles
+        private static Vector3 UnwrapEuler(Vector3 current, Vector3 target) {
+            return new Vector3(
+                UnwrapRadian(current.X, target.X),
+                UnwrapRadian(current.Y, target.Y),
+                UnwrapRadian(current.Z, target.Z)
+            );
+        }
+
+        // [V6 Logic] Helper to unwrap a single radian angle
+        private static float UnwrapRadian(float current, float target) {
+            float delta = target - current;
+            // Wrap delta to -PI...PI
+            while (delta <= -MathHelper.Pi) delta += MathHelper.TwoPi;
+            while (delta > MathHelper.Pi) delta -= MathHelper.TwoPi;
+            return current + delta;
         }
 
         [NotNull, ItemNotNull]
