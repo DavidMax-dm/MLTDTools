@@ -73,18 +73,25 @@ namespace OpenMLTD.MillionDance.Entities.Internal {
                 var frame = new CameraFrame();
                 var time = i * frameDuration;
 
+                // 采样时间偏移：向后偏移 0.1 帧
+                // 这能有效避免在关键帧边界（尤其是切镜点）采样到不稳定的中间值
+                var sampleTime = time + (0.1f * frameDuration);
+
+                // 帧的时间戳保持原样
                 frame.Time = time;
-                frame.FocalLength = GetInterpolatedValue(focalLengthCurve, time);
-                frame.Cut = (int)GetLowerClampedValue(camCutCurve, time);
-                frame.AngleX = GetInterpolatedValue(angleXCurve, time);
-                frame.AngleY = GetInterpolatedValue(angleYCurve, time);
-                frame.AngleZ = GetInterpolatedValue(angleZCurve, time);
-                frame.PositionX = GetInterpolatedValue(posXCurve, time);
-                frame.PositionY = GetInterpolatedValue(posYCurve, time);
-                frame.PositionZ = GetInterpolatedValue(posZCurve, time);
-                frame.TargetX = GetInterpolatedValue(targetXCurve, time);
-                frame.TargetY = GetInterpolatedValue(targetYCurve, time);
-                frame.TargetZ = GetInterpolatedValue(targetZCurve, time);
+                
+                // 使用 sampleTime 进行取值
+                frame.FocalLength = GetInterpolatedValue(focalLengthCurve, sampleTime);
+                frame.Cut = (int)GetLowerClampedValue(camCutCurve, sampleTime);
+                frame.AngleX = GetInterpolatedValue(angleXCurve, sampleTime);
+                frame.AngleY = GetInterpolatedValue(angleYCurve, sampleTime);
+                frame.AngleZ = GetInterpolatedValue(angleZCurve, sampleTime);
+                frame.PositionX = GetInterpolatedValue(posXCurve, sampleTime);
+                frame.PositionY = GetInterpolatedValue(posYCurve, sampleTime);
+                frame.PositionZ = GetInterpolatedValue(posZCurve, sampleTime);
+                frame.TargetX = GetInterpolatedValue(targetXCurve, sampleTime);
+                frame.TargetY = GetInterpolatedValue(targetYCurve, sampleTime);
+                frame.TargetZ = GetInterpolatedValue(targetZCurve, sampleTime);
 
                 cameraFrames[i] = frame;
             }
