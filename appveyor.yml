@@ -17,7 +17,7 @@ environment:
 install:
   - ps: .\scripts\install.ps1
 before_build:
-  - cmd: nuget update -self
+  # - cmd: nuget update -self
   - cmd: git submodule update --init --recursive
   - cmd: npm install -g marked
   - ps: .\scripts\nuget_restore.ps1
