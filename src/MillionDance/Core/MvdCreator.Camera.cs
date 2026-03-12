@@ -100,7 +100,7 @@ namespace OpenMLTD.MillionDance.Core {
 
                 var motionFrame = animation.CameraFrames[projectedFrameIndex];
 
-                int mvdFrameIndex;
+                int mvdFrameIndex = 0;
 
                 if (transform60FpsTo30Fps) {
                     mvdFrameIndex = mltdFrameIndex / 2;
