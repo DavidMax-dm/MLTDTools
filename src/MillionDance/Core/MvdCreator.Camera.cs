@@ -92,19 +92,10 @@ namespace OpenMLTD.MillionDance.Core {
 
                 if (shouldUseAppeal) {
                     var indexInAppeal = mltdFrameIndex - appealTimes.StartFrame;
-
                     if (indexInAppeal >= appealAnimation.FrameCount) {
                         indexInAppeal = appealAnimation.FrameCount - 1;
                     }
-
-                    // `indexInAppeal`, unlike `mltdFrameIndex`, has not been scaled yet
-                    if (transform60FpsTo30Fps) {
-                        projectedFrameIndex = indexInAppeal / 2;
-                    } else {
-                        projectedFrameIndex = indexInAppeal;
-                    }
-                } else {
-                    projectedFrameIndex = mltdFrameIndex;
+                    projectedFrameIndex = indexInAppeal;
                 }
 
                 var motionFrame = animation.CameraFrames[projectedFrameIndex];
@@ -225,7 +216,7 @@ namespace OpenMLTD.MillionDance.Core {
         private static float FocalLengthToFov(float focalLength) {
             // MLTD uses physical camera
             // unit: mm, as the unit of MLTD camera frame is also mm
-            const float sensorSizeY = 22.0f / 2;
+            const float sensorSizeY = 22.0f;
             var fovRad = 2 * (float)Math.Atan((sensorSizeY / 2) / focalLength);
             var fovDeg = MathHelper.RadiansToDegrees(fovRad);
 
