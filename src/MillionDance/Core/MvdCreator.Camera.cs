@@ -88,7 +88,7 @@ namespace OpenMLTD.MillionDance.Core {
                 var shouldUseAppeal = appealType != AppealType.None && (appealTimes.StartFrame <= mltdFrameIndex && mltdFrameIndex < appealTimes.EndFrame) && appealAnimation != null;
                 var animation = shouldUseAppeal ? appealAnimation : mainAnimation;
 
-                int projectedFrameIndex;
+                int projectedFrameIndex = mltdFrameIndex;
 
                 if (shouldUseAppeal) {
                     var indexInAppeal = mltdFrameIndex - appealTimes.StartFrame;
