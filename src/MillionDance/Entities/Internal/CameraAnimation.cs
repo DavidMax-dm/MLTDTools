@@ -70,26 +70,28 @@ namespace OpenMLTD.MillionDance.Entities.Internal {
             var cameraFrames = new CameraFrame[frameCount];
 
             // 缩放两倍，输出60FPS动画
-            float scale = 2.0f;
-            var totalDuration = GetMaxDuration(allCameraCurves) * scale; 
-            var frameCount = (int)Math.Round(totalDuration / frameDuration);
+            float scale = 2.0f; 
+            var originalDuration = GetMaxDuration(allCameraCurves);
+            var totalDuration = originalDuration * scale;  // 计算拉长后的总时长
+            var frameCount = (int)Math.Round(totalDuration / frameDuration); // 计算总帧数
+
+            var cameraFrames = new CameraFrame[frameCount];
 
             for (var i = 0; i < frameCount; ++i) {
                 var frame = new CameraFrame();
                 
-                //var time = i * frameDuration;
-
-                // 采样时间偏移：向后偏移 0.1 帧
-                // 这能有效避免在关键帧边界（尤其是切镜点）采样到不稳定的中间值
-                //var sampleTime = time + (0.1f * frameDuration);
-
-                var time = (i * frameDuration) / scale; 
-                var sampleTime = time + (0.1f * frameDuration); // 保持偏移不变，避免踩在边界上
-
-                // 帧的时间戳保持原样
-                frame.Time = time;
+                // --- 修改点 2：计算当前帧的导出时间（拉长后的时间轴） ---
+                var exportTime = i * frameDuration;
+        
+                // --- 修改点 3：计算采样时间（映射回原始动画的时间轴） ---
+                // 比如拉长2倍后，导出视频的第2秒，应该去拿原始曲线第1秒的数据
+                var rawTime = exportTime / scale;
+                var sampleTime = rawTime + (0.1f * (frameDuration / scale)); // 偏移量也要按比例缩小
+        
+                // 帧的时间戳设置为导出时间轴的时间
+                frame.Time = exportTime;
                 
-                // 使用 sampleTime 进行取值
+                // 使用 sampleTime 在原始曲线上采样
                 frame.FocalLength = GetInterpolatedValue(focalLengthCurve, sampleTime);
                 frame.Cut = (int)GetLowerClampedValue(camCutCurve, sampleTime);
                 frame.AngleX = GetInterpolatedValue(angleXCurve, sampleTime);
@@ -101,7 +103,7 @@ namespace OpenMLTD.MillionDance.Entities.Internal {
                 frame.TargetX = GetInterpolatedValue(targetXCurve, sampleTime);
                 frame.TargetY = GetInterpolatedValue(targetYCurve, sampleTime);
                 frame.TargetZ = GetInterpolatedValue(targetZCurve, sampleTime);
-
+        
                 cameraFrames[i] = frame;
             }
 
