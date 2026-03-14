@@ -63,35 +63,36 @@ namespace OpenMLTD.MillionDance.Entities.Internal {
                 throw new ApplicationException("Invalid key type.");
             }
 
-            const float frameDuration = 1.0f / FrameRate.Mltd;
-            var totalDuration = GetMaxDuration(allCameraCurves);
+            // 定义基本参数
+            const float frameRate = 60.0f; // 强制 60 FPS
+            const float frameDuration = 1.0f / frameRate;
+            float scale = 2.0f; // 缩放倍率：2.0 代表动画时长翻倍（变慢）
+
+            // 计算时长和帧数
+            var originalDuration = GetMaxDuration(allCameraCurves);
+            var totalDuration = originalDuration * scale; 
             var frameCount = (int)Math.Round(totalDuration / frameDuration);
 
+            // 初始化数组
             var cameraFrames = new CameraFrame[frameCount];
 
-            // 缩放两倍，输出60FPS动画
-            float scale = 2.0f; 
-            var originalDuration = GetMaxDuration(allCameraCurves);
-            var totalDuration = originalDuration * scale;  // 计算拉长后的总时长
-            var frameCount = (int)Math.Round(totalDuration / frameDuration); // 计算总帧数
-
-            var cameraFrames = new CameraFrame[frameCount];
-
+            // 开始采样
             for (var i = 0; i < frameCount; ++i) {
                 var frame = new CameraFrame();
                 
-                // --- 修改点 2：计算当前帧的导出时间（拉长后的时间轴） ---
+                // exportTime 是导出文件里的时间戳 (0.0, 0.016, 0.033...)
                 var exportTime = i * frameDuration;
-        
-                // --- 修改点 3：计算采样时间（映射回原始动画的时间轴） ---
-                // 比如拉长2倍后，导出视频的第2秒，应该去拿原始曲线第1秒的数据
+
+                // rawTime 是映射回原始数据的时间 (如果是 2倍缩放，导出到 2s 时采样原始数据的 1s)
                 var rawTime = exportTime / scale;
-                var sampleTime = rawTime + (0.1f * (frameDuration / scale)); // 偏移量也要按比例缩小
-        
-                // 帧的时间戳设置为导出时间轴的时间
+
+                // 采样时间偏移：在原始时间轴上微偏，避开关键帧边界
+                var sampleTime = rawTime + (0.1f * (frameDuration / scale));
+
+                // 赋值给导出帧
                 frame.Time = exportTime;
                 
-                // 使用 sampleTime 在原始曲线上采样
+                // 核心采样逻辑：全部使用映射回来的 sampleTime
                 frame.FocalLength = GetInterpolatedValue(focalLengthCurve, sampleTime);
                 frame.Cut = (int)GetLowerClampedValue(camCutCurve, sampleTime);
                 frame.AngleX = GetInterpolatedValue(angleXCurve, sampleTime);
@@ -103,7 +104,7 @@ namespace OpenMLTD.MillionDance.Entities.Internal {
                 frame.TargetX = GetInterpolatedValue(targetXCurve, sampleTime);
                 frame.TargetY = GetInterpolatedValue(targetYCurve, sampleTime);
                 frame.TargetZ = GetInterpolatedValue(targetZCurve, sampleTime);
-        
+
                 cameraFrames[i] = frame;
             }
 
