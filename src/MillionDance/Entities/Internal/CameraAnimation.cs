@@ -69,13 +69,22 @@ namespace OpenMLTD.MillionDance.Entities.Internal {
 
             var cameraFrames = new CameraFrame[frameCount];
 
+            // 缩放两倍，输出60FPS动画
+            float scale = 2.0f;
+            var totalDuration = GetMaxDuration(allCameraCurves) * scale; 
+            var frameCount = (int)Math.Round(totalDuration / frameDuration);
+
             for (var i = 0; i < frameCount; ++i) {
                 var frame = new CameraFrame();
-                var time = i * frameDuration;
+                
+                //var time = i * frameDuration;
 
                 // 采样时间偏移：向后偏移 0.1 帧
                 // 这能有效避免在关键帧边界（尤其是切镜点）采样到不稳定的中间值
-                var sampleTime = time + (0.1f * frameDuration);
+                //var sampleTime = time + (0.1f * frameDuration);
+
+                var time = (i * frameDuration) / scale; 
+                var sampleTime = time + (0.1f * frameDuration); // 保持偏移不变，避免踩在边界上
 
                 // 帧的时间戳保持原样
                 frame.Time = time;
