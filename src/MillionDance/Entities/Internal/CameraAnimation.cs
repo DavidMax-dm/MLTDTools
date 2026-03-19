@@ -92,17 +92,22 @@ namespace OpenMLTD.MillionDance.Entities.Internal {
                 // 赋值给导出帧
                 frame.Time = exportTime;
                 
-                // 1. 获取原始的焦距数值 (Unity 中的 mm 单位)
+                // 1. 获取原始的焦距数值
                 var rawFocalLength = GetInterpolatedValue(focalLengthCurve, sampleTime);
                 
-                // 2. 转换为 MMD 需要的垂直 FOV (角度单位)
-                // 公式: FOV = 2 * atan(SensorHeight / (2 * FocalLength)) * (180 / PI)
-                // Unity 默认 SensorHeight 通常为 24.0mm
+                // 防止焦距为 0 导致溢出
+                if (rawFocalLength < 0.001f) rawFocalLength = 0.001f;
+                
+                // 2. 转换为 MMD 垂直 FOV
+                // 如果你发现“该大变小”，尝试检查这个公式：
+                // 标准公式：FOV = 2 * atan(高度 / (2 * 焦距))
                 const double sensorHeight = 24.0; 
                 var vFovRad = 2.0 * Math.Atan(sensorHeight / (2.0 * rawFocalLength));
                 var vFovDeg = vFovRad * (180.0 / Math.PI);
                 
-                // 3. 赋值给 frame (注意：虽然变量名还叫 FocalLength，但存的是角度)
+                // 3. 限制 FOV 范围 (MMD 通常在 1-125 度之间)
+                if (vFovDeg > 180) vFovDeg = 180;
+                
                 frame.FocalLength = (float)vFovDeg;
                 
                 // 核心采样逻辑：全部使用映射回来的 sampleTime
