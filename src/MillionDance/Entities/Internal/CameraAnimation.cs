@@ -96,19 +96,20 @@ namespace OpenMLTD.MillionDance.Entities.Internal {
                 var rawFocalLength = GetInterpolatedValue(focalLengthCurve, sampleTime);
                 
                 // 防止焦距为 0 导致溢出
-                if (rawFocalLength < 0.001f) rawFocalLength = 0.001f;
+                // if (rawFocalLength < 0.001f) rawFocalLength = 0.001f;
                 
                 // 2. 转换为 MMD 垂直 FOV
                 // 如果你发现“该大变小”，尝试检查这个公式：
                 // 标准公式：FOV = 2 * atan(高度 / (2 * 焦距))
-                const double sensorHeight = 24.0; 
-                var vFovRad = 2.0 * Math.Atan(sensorHeight / (2.0 * rawFocalLength));
-                var vFovDeg = vFovRad * (180.0 / Math.PI);
+                // const double sensorHeight = 24.0; 
+                // var vFovRad = 2.0 * Math.Atan(sensorHeight / (2.0 * rawFocalLength));
+                // var vFovDeg = vFovRad * (180.0 / Math.PI);
                 
                 // 3. 限制 FOV 范围 (MMD 通常在 1-125 度之间)
-                if (vFovDeg > 180) vFovDeg = 180;
+                // if (vFovDeg > 180) vFovDeg = 180;
                 
-                frame.FocalLength = (float)vFovDeg;
+                // frame.FocalLength = (float)vFovDeg;
+                frame.FocalLength = rawValue;
                 
                 // 核心采样逻辑：全部使用映射回来的 sampleTime
                 // frame.FocalLength = GetInterpolatedValue(focalLengthCurve, sampleTime);
