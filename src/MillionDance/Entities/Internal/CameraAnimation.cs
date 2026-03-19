@@ -109,7 +109,7 @@ namespace OpenMLTD.MillionDance.Entities.Internal {
                 // if (vFovDeg > 180) vFovDeg = 180;
                 
                 // frame.FocalLength = (float)vFovDeg;
-                frame.FocalLength = rawValue;
+                frame.FocalLength = rawFocalLength;
                 
                 // 核心采样逻辑：全部使用映射回来的 sampleTime
                 // frame.FocalLength = GetInterpolatedValue(focalLengthCurve, sampleTime);
