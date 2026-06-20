@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Imas.Data.Serialized;
@@ -70,12 +70,9 @@ namespace OpenMLTD.MillionDance.Core {
             var transform60FpsTo30Fps = _conversionConfig.Transform60FpsTo30Fps;
             var scaleToVmdSize = _conversionConfig.ScaleToVmdSize;
             var unityToVmdScale = _scalingConfig.ScaleUnityToVmd;
-
-            // [V6 Logic] State for Euler Unwrapping
-            Vector3 lastEuler = Vector3.Zero;
-            bool isFirstFrame = true;
-            int lastCutValue = -1;
-            CameraAnimation lastAnimationSource = null;
+            var previousCut = int.MinValue;
+            var previousRotation = Vector3.Zero;
+            var hasPreviousRotation = false;
 
             for (var mltdFrameIndex = 0; mltdFrameIndex < animationFrameCount; ++mltdFrameIndex) {
                 if (transform60FpsTo30Fps) {
@@ -88,19 +85,28 @@ namespace OpenMLTD.MillionDance.Core {
                 var shouldUseAppeal = appealType != AppealType.None && (appealTimes.StartFrame <= mltdFrameIndex && mltdFrameIndex < appealTimes.EndFrame) && appealAnimation != null;
                 var animation = shouldUseAppeal ? appealAnimation : mainAnimation;
 
-                int projectedFrameIndex = mltdFrameIndex;
+                int projectedFrameIndex;
 
                 if (shouldUseAppeal) {
                     var indexInAppeal = mltdFrameIndex - appealTimes.StartFrame;
+
                     if (indexInAppeal >= appealAnimation.FrameCount) {
                         indexInAppeal = appealAnimation.FrameCount - 1;
                     }
-                    projectedFrameIndex = indexInAppeal;
+
+                    // `indexInAppeal`, unlike `mltdFrameIndex`, has not been scaled yet
+                    if (transform60FpsTo30Fps) {
+                        projectedFrameIndex = indexInAppeal / 2;
+                    } else {
+                        projectedFrameIndex = indexInAppeal;
+                    }
+                } else {
+                    projectedFrameIndex = mltdFrameIndex;
                 }
 
                 var motionFrame = animation.CameraFrames[projectedFrameIndex];
 
-                int mvdFrameIndex = 0;
+                int mvdFrameIndex;
 
                 if (transform60FpsTo30Fps) {
                     mvdFrameIndex = mltdFrameIndex / 2;
@@ -109,6 +115,8 @@ namespace OpenMLTD.MillionDance.Core {
                 }
 
                 var mvdFrame = new MvdCameraFrame(mvdFrameIndex);
+                mvdFrame.IsCut = motionFrame.Cut != previousCut;
+                previousCut = motionFrame.Cut;
 
                 var position = new Vector3(motionFrame.PositionX, motionFrame.PositionY, motionFrame.PositionZ);
 
@@ -132,35 +140,20 @@ namespace OpenMLTD.MillionDance.Core {
 
                 mvdFrame.Distance = delta.Length;
 
-                var q = CameraOrientation.QuaternionLookAt(in position, in target, in Vector3.UnitY);
+                Vector3 rotation;
 
-                var rotation = CameraOrientation.ComputeMmdOrientation(in q, motionFrame.AngleZ);
-
-                // [V6 Logic] Euler Unwrapping
-                // Detect cuts to reset the unwrap state
-                bool isCut = false;
-                if (!isFirstFrame) {
-                    // If we switched from Main to Appeal (or vice versa), consider it a cut
-                    if (animation != lastAnimationSource) isCut = true;
-                    // If the 'cut' property in the motion file changed, it is a cut
-                    if (motionFrame.Cut != lastCutValue) isCut = true;
-                }
-
-                if (isFirstFrame || isCut) {
-                    // Reset or initialize
-                    lastEuler = rotation;
+                if (delta.LengthSquared > 0.00001f) {
+                    var q = CameraOrientation.QuaternionLookAt(in position, in target, in Vector3.UnitY);
+                    rotation = CameraOrientation.ComputeMmdOrientation(in q, motionFrame.AngleZ);
+                } else if (hasPreviousRotation) {
+                    rotation = previousRotation;
                 } else {
-                    // Unwrap to ensure continuity (prevent spinning)
-                    rotation = UnwrapEuler(lastEuler, rotation);
-                    lastEuler = rotation;
+                    rotation = Vector3.Zero;
                 }
-
-                // Update state for next iteration
-                lastAnimationSource = animation;
-                lastCutValue = motionFrame.Cut;
-                if (isFirstFrame) isFirstFrame = false;
 
                 mvdFrame.Rotation = rotation;
+                previousRotation = rotation;
+                hasPreviousRotation = true;
 
                 // MVD has good support of dynamic FOV. So here we can animate its value.
                 var fov = FocalLengthToFov(motionFrame.FocalLength);
@@ -170,24 +163,6 @@ namespace OpenMLTD.MillionDance.Core {
             }
 
             return cameraFrameList.ToArray();
-        }
-        
-        // [V6 Logic] Helper to unwrap Vector3 Euler angles
-        private static Vector3 UnwrapEuler(Vector3 current, Vector3 target) {
-            return new Vector3(
-                UnwrapRadian(current.X, target.X),
-                UnwrapRadian(current.Y, target.Y),
-                UnwrapRadian(current.Z, target.Z)
-            );
-        }
-
-        // [V6 Logic] Helper to unwrap a single radian angle
-        private static float UnwrapRadian(float current, float target) {
-            float delta = target - current;
-            // Wrap delta to -PI...PI
-            while (delta <= -MathHelper.Pi) delta += MathHelper.TwoPi;
-            while (delta > MathHelper.Pi) delta -= MathHelper.TwoPi;
-            return current + delta;
         }
 
         [NotNull, ItemNotNull]
@@ -216,8 +191,13 @@ namespace OpenMLTD.MillionDance.Core {
         private static float FocalLengthToFov(float focalLength) {
             // MLTD uses physical camera
             // unit: mm, as the unit of MLTD camera frame is also mm
-            const float sensorSizeY = 22.0f;
-            var fovRad = 2 * (float)Math.Atan((sensorSizeY / 2) / focalLength);
+            const float sensorHeightMm = 24.0f;
+
+            if (focalLength < 1) {
+                focalLength = 35;
+            }
+
+            var fovRad = 2 * (float)Math.Atan((sensorHeightMm / 2) / focalLength);
             var fovDeg = MathHelper.RadiansToDegrees(fovRad);
 
             return fovDeg;
