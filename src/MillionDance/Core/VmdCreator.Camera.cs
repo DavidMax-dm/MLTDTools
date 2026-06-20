@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
+using System;
 using Imas.Data.Serialized;
 using JetBrains.Annotations;
 using OpenMLTD.MillionDance.Entities.Internal;
@@ -15,7 +16,7 @@ namespace OpenMLTD.MillionDance.Core {
             VmdCameraFrame[] frames;
 
             if (ProcessCameraFrames && mainCamera != null) {
-                frames = CreateCameraFrames(mainCamera, baseScenario, cameraAppeal, FixedFov, appealType);
+                frames = CreateCameraFrames(mainCamera, baseScenario, cameraAppeal, appealType);
             } else {
                 frames = null;
             }
@@ -24,7 +25,7 @@ namespace OpenMLTD.MillionDance.Core {
         }
 
         [NotNull, ItemNotNull]
-        private VmdCameraFrame[] CreateCameraFrames([CanBeNull] CharacterImasMotionAsset mainCamera, [NotNull] ScenarioObject baseScenario, [CanBeNull] CharacterImasMotionAsset cameraAppeal, uint fixedFov, AppealType appealType) {
+        private VmdCameraFrame[] CreateCameraFrames([CanBeNull] CharacterImasMotionAsset mainCamera, [NotNull] ScenarioObject baseScenario, [CanBeNull] CharacterImasMotionAsset cameraAppeal, AppealType appealType) {
             // Here we reuse the logic in MVD camera frame computation
             var mvdCreator = new MvdCreator(_conversionConfig, _scalingConfig) {
                 ProcessCameraFrames = true,
@@ -45,12 +46,11 @@ namespace OpenMLTD.MillionDance.Core {
                 vmdFrame.Position = mvdFrame.Position;
                 vmdFrame.Orientation = mvdFrame.Rotation + new Vector3(MathHelper.Pi, 0, MathHelper.Pi);
 
-                // VMD does not have good support for animated FOV. So here just use a constant to avoid "jittering".
-                // The drawback is, some effects (like the first zooming cut in Shooting Stars) will not be able to achieve.
-                //var fov = FocalLengthToFov(frame.FocalLength);
-                //vmdFrame.FieldOfView = (uint)fov;
-
-                vmdFrame.FieldOfView = fixedFov;
+                // VMD stores FOV as an unsigned integer in degrees. The MVD frame
+                // already contains the source camera's FOV in radians, so preserve
+                // it per frame rather than replacing it with a fixed value.
+                var fov = MathHelper.RadiansToDegrees(mvdFrame.FieldOfView);
+                vmdFrame.FieldOfView = (uint)Math.Round(fov, MidpointRounding.AwayFromZero);
 
                 cameraFrameList.Add(vmdFrame);
             }
