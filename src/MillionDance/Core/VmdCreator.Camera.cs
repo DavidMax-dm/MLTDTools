@@ -167,7 +167,10 @@ namespace OpenMLTD.MillionDance.Core {
         private const float PositionErrorTolerance = 0.1f;
         private const float LengthErrorTolerance = 0.1f;
         private const float OrientationErrorTolerance = MathHelper.Pi / 720; // 0.25 degrees
-        private const float FovErrorTolerance = 0.51f;
+        // VMD stores FOV as an integer. A sub-degree source change can therefore
+        // appear as a one-frame step after rounding; allowing up to two degrees of
+        // fitting error prevents those rounding boundaries from becoming keyframes.
+        private const float FovErrorTolerance = 2.0f;
 
     }
 }
