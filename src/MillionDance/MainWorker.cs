@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing.Imaging;
@@ -569,8 +569,6 @@ namespace OpenMLTD.MillionDance {
                                 ProcessFacialFrames = false,
                                 ProcessLightFrames = false,
                             };
-
-                            creator.FixedFov = p.FixedFov;
 
                             var motion = creator.CreateCameraMotion(mainCamera, baseScenario, cameraAppeal, p.AppealType);
 
