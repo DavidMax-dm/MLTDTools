@@ -150,8 +150,8 @@ namespace OpenMLTD.MillionDance.Core {
             foreach (var frame in frames) {
                 for (var channel = 0; channel < 6; ++channel) {
                     frame.Interpolation[channel, 0] = 20;
-                    frame.Interpolation[channel, 1] = 20;
-                    frame.Interpolation[channel, 2] = 107;
+                    frame.Interpolation[channel, 1] = 107;
+                    frame.Interpolation[channel, 2] = 20;
                     frame.Interpolation[channel, 3] = 107;
                 }
             }
