@@ -45,6 +45,7 @@ namespace OpenMLTD.MillionDance.Core {
                 vmdFrame.Length = mvdFrame.Distance * 0.1f;
                 vmdFrame.Position = mvdFrame.Position;
                 vmdFrame.Orientation = mvdFrame.Rotation + new Vector3(MathHelper.Pi, 0, MathHelper.Pi);
+                vmdFrame.IsCut = mvdFrame.IsCut;
 
                 // VMD stores FOV as an unsigned integer in degrees. The MVD frame
                 // already contains the source camera's FOV in radians, so preserve
@@ -55,6 +56,7 @@ namespace OpenMLTD.MillionDance.Core {
                 cameraFrameList.Add(vmdFrame);
             }
 
+            UnwrapCameraOrientations(cameraFrameList);
             return ReduceCameraKeyframes(cameraFrameList);
         }
 
@@ -69,11 +71,37 @@ namespace OpenMLTD.MillionDance.Core {
             // Keep a frame whenever linearly interpolating any of those channels would
             // visibly deviate from the sampled MLTD camera motion.
             var keep = new bool[frames.Count];
-            keep[0] = true;
-            keep[frames.Count - 1] = true;
+            var anchors = new List<int> { 0 };
+
+            for (var i = 1; i < frames.Count; ++i) {
+                if (!frames[i].IsCut) {
+                    continue;
+                }
+
+                // Keep the final frame before the cut and the first frame after it.
+                // The one-frame segment is the VMD equivalent of Unity's constant
+                // tangent at a camera-cut boundary.
+                anchors.Add(i - 1);
+                anchors.Add(i);
+            }
+
+            anchors.Add(frames.Count - 1);
+            anchors.Sort();
+
+            foreach (var anchor in anchors) {
+                keep[anchor] = true;
+            }
 
             var pendingRanges = new Stack<KeyValuePair<int, int>>();
-            pendingRanges.Push(new KeyValuePair<int, int>(0, frames.Count - 1));
+
+            for (var i = 1; i < anchors.Count; ++i) {
+                var start = anchors[i - 1];
+                var end = anchors[i];
+
+                if (start != end) {
+                    pendingRanges.Push(new KeyValuePair<int, int>(start, end));
+                }
+            }
 
             while (pendingRanges.Count > 0) {
                 var range = pendingRanges.Pop();
@@ -155,6 +183,37 @@ namespace OpenMLTD.MillionDance.Core {
                     frame.Interpolation[channel, 3] = 107;
                 }
             }
+        }
+
+        private static void UnwrapCameraOrientations([NotNull, ItemNotNull] List<VmdCameraFrame> frames) {
+            for (var i = 1; i < frames.Count; ++i) {
+                var previous = frames[i - 1];
+                var current = frames[i];
+
+                if (current.IsCut) {
+                    continue;
+                }
+
+                current.Orientation = new Vector3(
+                    UnwrapAngle(previous.Orientation.X, current.Orientation.X),
+                    UnwrapAngle(previous.Orientation.Y, current.Orientation.Y),
+                    UnwrapAngle(previous.Orientation.Z, current.Orientation.Z));
+            }
+        }
+
+        private static float UnwrapAngle(float previous, float current) {
+            var delta = current - previous;
+            var twoPi = MathHelper.Pi * 2;
+
+            while (delta > MathHelper.Pi) {
+                delta -= twoPi;
+            }
+
+            while (delta < -MathHelper.Pi) {
+                delta += twoPi;
+            }
+
+            return previous + delta;
         }
 
         private static float MaxComponentDistance(Vector3 a, Vector3 b) {
