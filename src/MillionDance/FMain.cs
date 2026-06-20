@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
@@ -31,7 +31,6 @@ namespace OpenMLTD.MillionDance {
             chkGenerateFacialExpression.CheckedChanged -= ChkGenerateFacialExpression_CheckedChanged;
             chkGenerateCameraMotion.CheckedChanged -= ChkGenerateCameraMotion_CheckedChanged;
             radOptMotionSourceMltd.CheckedChanged -= RadOptMotionSourceMltd_CheckedChanged;
-            radOptCamFormatVmd.CheckedChanged -= RadOptCamFormatVmd_CheckedChanged;
             btnGo.Click -= BtnGo_Click;
             btnInputHead.Click -= BtnInputHead_Click;
             btnInputBody.Click -= BtnInputBody_Click;
@@ -62,7 +61,6 @@ namespace OpenMLTD.MillionDance {
             chkGenerateFacialExpression.CheckedChanged += ChkGenerateFacialExpression_CheckedChanged;
             chkGenerateCameraMotion.CheckedChanged += ChkGenerateCameraMotion_CheckedChanged;
             radOptMotionSourceMltd.CheckedChanged += RadOptMotionSourceMltd_CheckedChanged;
-            radOptCamFormatVmd.CheckedChanged += RadOptCamFormatVmd_CheckedChanged;
             btnGo.Click += BtnGo_Click;
             btnInputHead.Click += BtnInputHead_Click;
             btnInputBody.Click += BtnInputBody_Click;
@@ -353,13 +351,6 @@ namespace OpenMLTD.MillionDance {
                     }
                 }
 
-                if (radOptCamFormatVmd.Checked) {
-                    if (!uint.TryParse(txtOptFixedFov.Text, out var u) || u == 0) {
-                        Alert($"FOV value \"{txtOptFixedFov.Text}\" should be a valid positive integer.");
-                        return false;
-                    }
-                }
-
                 if (chkGenerateModel.Checked || chkGenerateCharAnim.Checked) {
                     if (!Regex.IsMatch(txtInputHead.Text, @"ch_[a-z]{2}\d{3}_(?:\d{3}[a-z]{3}|[a-z])(?:_v2)?\.unity3d$", RegexOptions.CultureInvariant)) {
                         Alert($"File \"{txtInputHead.Text}\" does not look like a character head file from the game.");
@@ -462,7 +453,6 @@ namespace OpenMLTD.MillionDance {
                 ip.TransformTo30Fps = radOptAnimFrameRate30.Checked;
                 ip.ScaleVmd = chkOptScaleVmd.Checked;
                 ip.UseMvdForCamera = radOptCamFormatMvd.Checked;
-                ip.FixedFov = ip.UseMvdForCamera ? 0 : Convert.ToUInt32(txtOptFixedFov.Text);
                 ip.MotionNumber = cboOptMotionNumber.SelectedIndex + 1;
                 ip.FormationNumber = cboOptFormationNumber.SelectedIndex + 1;
                 ip.DesiredCameraNumber = chkOptSpecifyCameraNumber.Checked ? (int)txtOptSpecifiedCameraNumber.Value : (int?)null;
@@ -496,13 +486,6 @@ namespace OpenMLTD.MillionDance {
             worker.Start();
 
             EnableMainControls(false);
-        }
-
-        private void RadOptCamFormatVmd_CheckedChanged(object sender, EventArgs e) {
-            var b = radOptCamFormatVmd.Checked;
-            txtOptFixedFov.Enabled = b;
-            label12.Enabled = b;
-            label17.Enabled = b;
         }
 
         private void RadOptMotionSourceMltd_CheckedChanged(object sender, EventArgs e) {
