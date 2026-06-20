@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -63,56 +63,23 @@ namespace OpenMLTD.MillionDance.Entities.Internal {
                 throw new ApplicationException("Invalid key type.");
             }
 
-            // 定义基本参数
-            const float frameRate = 60.0f; // 强制 60 FPS
-            const float frameDuration = 1.0f / frameRate;
-            float scale = 2.0f; // 缩放倍率：2.0 代表动画时长翻倍（变慢）
+            const float frameDuration = 1.0f / FrameRate.Mltd;
+            var totalDuration = GetMaxDuration(allCameraCurves);
+            // Include the endpoint as Unity's full-frame exporter does. The last
+            // F-curve key is otherwise omitted when its time lands on the frame grid.
+            var frameCount = (int)Math.Ceiling(totalDuration / frameDuration) + 1;
 
-            // 计算时长和帧数
-            var originalDuration = GetMaxDuration(allCameraCurves);
-            var totalDuration = originalDuration * scale; 
-            var frameCount = (int)Math.Round(totalDuration / frameDuration);
-
-            // 初始化数组
             var cameraFrames = new CameraFrame[frameCount];
 
-            // 开始采样
             for (var i = 0; i < frameCount; ++i) {
                 var frame = new CameraFrame();
-                
-                // exportTime 是导出文件里的时间戳 (0.0, 0.016, 0.033...)
-                var exportTime = i * frameDuration;
+                var time = i * frameDuration;
+                // Sampling a fraction into the frame gives the stable value after
+                // a camera cut instead of the transient value at its boundary.
+                var sampleTime = time + frameDuration * 0.1f;
 
-                // rawTime 是映射回原始数据的时间 (如果是 2倍缩放，导出到 2s 时采样原始数据的 1s)
-                var rawTime = exportTime / scale;
-
-                // 采样时间偏移：在原始时间轴上微偏，避开关键帧边界
-                var sampleTime = rawTime + (0.1f * (frameDuration / scale));
-
-                // 赋值给导出帧
-                frame.Time = exportTime;
-                
-                // 1. 获取原始的焦距数值
-                var rawFocalLength = GetInterpolatedValue(focalLengthCurve, sampleTime);
-                
-                // 防止焦距为 0 导致溢出
-                // if (rawFocalLength < 0.001f) rawFocalLength = 0.001f;
-                
-                // 2. 转换为 MMD 垂直 FOV
-                // 如果你发现“该大变小”，尝试检查这个公式：
-                // 标准公式：FOV = 2 * atan(高度 / (2 * 焦距))
-                // const double sensorHeight = 24.0; 
-                // var vFovRad = 2.0 * Math.Atan(sensorHeight / (2.0 * rawFocalLength));
-                // var vFovDeg = vFovRad * (180.0 / Math.PI);
-                
-                // 3. 限制 FOV 范围 (MMD 通常在 1-125 度之间)
-                // if (vFovDeg > 180) vFovDeg = 180;
-                
-                // frame.FocalLength = (float)vFovDeg;
-                frame.FocalLength = rawFocalLength;
-                
-                // 核心采样逻辑：全部使用映射回来的 sampleTime
-                // frame.FocalLength = GetInterpolatedValue(focalLengthCurve, sampleTime);
+                frame.Time = time;
+                frame.FocalLength = GetInterpolatedValue(focalLengthCurve, sampleTime);
                 frame.Cut = (int)GetLowerClampedValue(camCutCurve, sampleTime);
                 frame.AngleX = GetInterpolatedValue(angleXCurve, sampleTime);
                 frame.AngleY = GetInterpolatedValue(angleYCurve, sampleTime);
