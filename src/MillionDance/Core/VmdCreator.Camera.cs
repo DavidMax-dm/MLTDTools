@@ -55,8 +55,119 @@ namespace OpenMLTD.MillionDance.Core {
                 cameraFrameList.Add(vmdFrame);
             }
 
-            return cameraFrameList.ToArray();
+            return ReduceCameraKeyframes(cameraFrameList);
         }
+
+        [NotNull, ItemNotNull]
+        private static VmdCameraFrame[] ReduceCameraKeyframes([NotNull] List<VmdCameraFrame> frames) {
+            if (frames.Count <= 2) {
+                SetLinearInterpolation(frames);
+                return frames.ToArray();
+            }
+
+            // VMD has one shared timeline for position, rotation, distance and FOV.
+            // Keep a frame whenever linearly interpolating any of those channels would
+            // visibly deviate from the sampled MLTD camera motion.
+            var keep = new bool[frames.Count];
+            keep[0] = true;
+            keep[frames.Count - 1] = true;
+
+            var pendingRanges = new Stack<KeyValuePair<int, int>>();
+            pendingRanges.Push(new KeyValuePair<int, int>(0, frames.Count - 1));
+
+            while (pendingRanges.Count > 0) {
+                var range = pendingRanges.Pop();
+                var splitIndex = FindLargestInterpolationError(frames, range.Key, range.Value);
+
+                if (splitIndex < 0) {
+                    continue;
+                }
+
+                keep[splitIndex] = true;
+                pendingRanges.Push(new KeyValuePair<int, int>(range.Key, splitIndex));
+                pendingRanges.Push(new KeyValuePair<int, int>(splitIndex, range.Value));
+            }
+
+            var result = new List<VmdCameraFrame>();
+
+            for (var i = 0; i < frames.Count; ++i) {
+                if (keep[i]) {
+                    result.Add(frames[i]);
+                }
+            }
+
+            SetLinearInterpolation(result);
+            return result.ToArray();
+        }
+
+        private static int FindLargestInterpolationError([NotNull] List<VmdCameraFrame> frames, int startIndex, int endIndex) {
+            if (endIndex - startIndex <= 1) {
+                return -1;
+            }
+
+            var start = frames[startIndex];
+            var end = frames[endIndex];
+            var frameCount = end.FrameIndex - start.FrameIndex;
+
+            if (frameCount <= 0) {
+                return -1;
+            }
+
+            var largestError = 1.0f;
+            var largestErrorIndex = -1;
+
+            for (var i = startIndex + 1; i < endIndex; ++i) {
+                var frame = frames[i];
+                var t = (frame.FrameIndex - start.FrameIndex) / (float)frameCount;
+                var error = GetNormalizedInterpolationError(start, end, frame, t);
+
+                if (error > largestError) {
+                    largestError = error;
+                    largestErrorIndex = i;
+                }
+            }
+
+            return largestErrorIndex;
+        }
+
+        private static float GetNormalizedInterpolationError([NotNull] VmdCameraFrame start, [NotNull] VmdCameraFrame end, [NotNull] VmdCameraFrame actual, float t) {
+            var expectedPosition = Vector3.Lerp(start.Position, end.Position, t);
+            var positionError = MaxComponentDistance(actual.Position, expectedPosition) / PositionErrorTolerance;
+
+            var expectedOrientation = Vector3.Lerp(start.Orientation, end.Orientation, t);
+            var orientationError = MaxComponentDistance(actual.Orientation, expectedOrientation) / OrientationErrorTolerance;
+
+            var expectedLength = start.Length + (end.Length - start.Length) * t;
+            var lengthError = Math.Abs(actual.Length - expectedLength) / LengthErrorTolerance;
+
+            var expectedFov = start.FieldOfView + ((float)end.FieldOfView - start.FieldOfView) * t;
+            var fovError = Math.Abs(actual.FieldOfView - expectedFov) / FovErrorTolerance;
+
+            return Math.Max(Math.Max(positionError, orientationError), Math.Max(lengthError, fovError));
+        }
+
+        private static void SetLinearInterpolation([NotNull, ItemNotNull] List<VmdCameraFrame> frames) {
+            foreach (var frame in frames) {
+                for (var channel = 0; channel < 6; ++channel) {
+                    frame.Interpolation[channel, 0] = 20;
+                    frame.Interpolation[channel, 1] = 20;
+                    frame.Interpolation[channel, 2] = 107;
+                    frame.Interpolation[channel, 3] = 107;
+                }
+            }
+        }
+
+        private static float MaxComponentDistance(Vector3 a, Vector3 b) {
+            return Math.Max(Math.Abs(a.X - b.X), Math.Max(Math.Abs(a.Y - b.Y), Math.Abs(a.Z - b.Z)));
+        }
+
+        // Values are in VMD coordinates, radians, and degrees respectively. They are
+        // deliberately conservative so the curve is compressed only when the visual
+        // result stays close to the full-frame source evaluation.
+        private const float PositionErrorTolerance = 0.1f;
+        private const float LengthErrorTolerance = 0.1f;
+        private const float OrientationErrorTolerance = MathHelper.Pi / 720; // 0.25 degrees
+        private const float FovErrorTolerance = 0.51f;
 
     }
 }
