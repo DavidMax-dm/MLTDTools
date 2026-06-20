@@ -1,4 +1,4 @@
-﻿namespace OpenMLTD.MillionDance {
+namespace OpenMLTD.MillionDance {
     partial class FMain {
         /// <summary>
         /// Required designer variable.
@@ -83,7 +83,6 @@
             this.label24 = new System.Windows.Forms.Label();
             this.cboOptMotionNumber = new System.Windows.Forms.ComboBox();
             this.label14 = new System.Windows.Forms.Label();
-            this.txtOptFixedFov = new System.Windows.Forms.TextBox();
             this.chkOptScaleVmd = new System.Windows.Forms.CheckBox();
             this.panel2 = new System.Windows.Forms.Panel();
             this.radOptAnimFrameRate30 = new System.Windows.Forms.RadioButton();
@@ -712,7 +711,6 @@
             this.tabPage2.Controls.Add(this.label24);
             this.tabPage2.Controls.Add(this.cboOptMotionNumber);
             this.tabPage2.Controls.Add(this.label14);
-            this.tabPage2.Controls.Add(this.txtOptFixedFov);
             this.tabPage2.Controls.Add(this.chkOptScaleVmd);
             this.tabPage2.Controls.Add(this.panel2);
             this.tabPage2.Controls.Add(this.label6);
@@ -867,16 +865,6 @@
             this.label14.TabIndex = 8;
             this.label14.Text = "Motion file no. (affects dance):";
             // 
-            // txtOptFixedFov
-            // 
-            this.txtOptFixedFov.Enabled = false;
-            this.txtOptFixedFov.Location = new System.Drawing.Point(109, 211);
-            this.txtOptFixedFov.Name = "txtOptFixedFov";
-            this.txtOptFixedFov.Size = new System.Drawing.Size(60, 20);
-            this.txtOptFixedFov.TabIndex = 6;
-            this.txtOptFixedFov.Text = "20";
-            this.txtOptFixedFov.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
-            // 
             // chkOptScaleVmd
             // 
             this.chkOptScaleVmd.AutoSize = true;
@@ -932,12 +920,11 @@
             // label17
             // 
             this.label17.AutoSize = true;
-            this.label17.Enabled = false;
-            this.label17.Location = new System.Drawing.Point(201, 214);
+            this.label17.Location = new System.Drawing.Point(109, 214);
             this.label17.Name = "label17";
-            this.label17.Size = new System.Drawing.Size(69, 13);
+            this.label17.Size = new System.Drawing.Size(177, 13);
             this.label17.TabIndex = 10;
-            this.label17.Text = "(default = 20)";
+            this.label17.Text = "(animated, from source camera)";
             // 
             // label12
             // 
@@ -948,15 +935,16 @@
             this.label12.Size = new System.Drawing.Size(25, 13);
             this.label12.TabIndex = 7;
             this.label12.Text = "deg";
+            this.label12.Visible = false;
             // 
             // label11
             // 
             this.label11.AutoSize = true;
             this.label11.Location = new System.Drawing.Point(26, 214);
             this.label11.Name = "label11";
-            this.label11.Size = new System.Drawing.Size(76, 13);
+            this.label11.Size = new System.Drawing.Size(32, 13);
             this.label11.TabIndex = 5;
-            this.label11.Text = "Constant FOV:";
+            this.label11.Text = "FOV:";
             // 
             // panel3
             // 
@@ -984,9 +972,9 @@
             this.radOptCamFormatVmd.AutoSize = true;
             this.radOptCamFormatVmd.Location = new System.Drawing.Point(7, 3);
             this.radOptCamFormatVmd.Name = "radOptCamFormatVmd";
-            this.radOptCamFormatVmd.Size = new System.Drawing.Size(123, 17);
+            this.radOptCamFormatVmd.Size = new System.Drawing.Size(122, 17);
             this.radOptCamFormatVmd.TabIndex = 5;
-            this.radOptCamFormatVmd.Text = "VMD (constant FOV)";
+            this.radOptCamFormatVmd.Text = "VMD (dynamic FOV)";
             this.radOptCamFormatVmd.UseVisualStyleBackColor = true;
             // 
             // label10
@@ -1503,7 +1491,6 @@
         private System.Windows.Forms.CheckBox chkOptAddHighlightEyes;
         private System.Windows.Forms.CheckBox chkOptAddHighlightHair;
         private System.Windows.Forms.Label label25;
-        private System.Windows.Forms.TextBox txtOptFixedFov;
         private System.Windows.Forms.Label label17;
         private System.Windows.Forms.Label label12;
         private System.Windows.Forms.Label label11;
