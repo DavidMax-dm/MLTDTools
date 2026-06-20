@@ -1,4 +1,4 @@
-﻿using JetBrains.Annotations;
+using JetBrains.Annotations;
 using OpenTK;
 
 namespace OpenMLTD.MillionDance.Entities.Mvd {
@@ -16,6 +16,11 @@ namespace OpenMLTD.MillionDance.Entities.Mvd {
 
         // Field of view in radians
         public float FieldOfView { get; internal set; }
+
+        // Camera-cut marker carried through conversion. It is not part of the
+        // MVD file format, but VMD export needs it to prevent interpolation
+        // across a cut.
+        public bool IsCut { get; internal set; }
 
         public bool IsSpline { get; internal set; }
 
