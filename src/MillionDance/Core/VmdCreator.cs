@@ -1,4 +1,4 @@
-﻿using JetBrains.Annotations;
+using JetBrains.Annotations;
 
 namespace OpenMLTD.MillionDance.Core {
     internal sealed partial class VmdCreator {
@@ -15,8 +15,6 @@ namespace OpenMLTD.MillionDance.Core {
         public bool ProcessFacialFrames { get; set; } = true;
 
         public bool ProcessLightFrames { get; set; } = true;
-
-        public uint FixedFov { get; set; } = 20;
 
         [NotNull]
         private readonly ConversionConfig _conversionConfig;
