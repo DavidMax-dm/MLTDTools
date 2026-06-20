@@ -1,4 +1,4 @@
-﻿using JetBrains.Annotations;
+using JetBrains.Annotations;
 using OpenTK;
 
 namespace OpenMLTD.MillionDance.Entities.Vmd {
@@ -20,6 +20,10 @@ namespace OpenMLTD.MillionDance.Entities.Vmd {
         public byte[,] Interpolation { get; }
 
         public uint FieldOfView { get; internal set; }
+
+        // Internal conversion marker; VMD itself stores cuts as adjacent camera
+        // keyframes rather than as a dedicated field.
+        public bool IsCut { get; internal set; }
 
         [NotNull]
         public byte[] Unknown { get; }
