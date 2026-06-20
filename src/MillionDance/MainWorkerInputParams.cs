@@ -1,4 +1,4 @@
-﻿using Imas.Data.Serialized;
+using Imas.Data.Serialized;
 using JetBrains.Annotations;
 using OpenMLTD.MillionDance.Core;
 
@@ -74,8 +74,6 @@ namespace OpenMLTD.MillionDance {
         public bool ScaleVmd { get; set; }
 
         public bool UseMvdForCamera { get; set; }
-
-        public uint FixedFov { get; set; }
 
         public int MotionNumber { get; set; }
 
