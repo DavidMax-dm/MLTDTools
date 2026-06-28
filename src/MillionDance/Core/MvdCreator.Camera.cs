@@ -94,12 +94,7 @@ namespace OpenMLTD.MillionDance.Core {
                         indexInAppeal = appealAnimation.FrameCount - 1;
                     }
 
-                    // `indexInAppeal`, unlike `mltdFrameIndex`, has not been scaled yet
-                    if (transform60FpsTo30Fps) {
-                        projectedFrameIndex = indexInAppeal / 2;
-                    } else {
-                        projectedFrameIndex = indexInAppeal;
-                    }
+                    projectedFrameIndex = indexInAppeal;
                 } else {
                     projectedFrameIndex = mltdFrameIndex;
                 }
