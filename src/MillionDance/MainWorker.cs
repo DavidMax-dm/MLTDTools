@@ -402,8 +402,7 @@ namespace OpenMLTD.MillionDance {
 
                         // Otherwise not possible; camera appeals are always stored in the main camera file
                         if (cameraAppeal == null) {
-                            Log("Cannot load camera appeal data. Please check whether this song actually has the appeal you selected.");
-                            break;
+                            Log("Cannot load camera appeal data. Camera motion will be exported without appeal.");
                         }
                     }
                 } else {
