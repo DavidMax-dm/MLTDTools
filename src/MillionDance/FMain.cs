@@ -88,7 +88,7 @@ namespace OpenMLTD.MillionDance {
         }
 
         private void BtnOptSelectExternalAppealFile_Click(object sender, EventArgs e) {
-            var (path, ok) = SelectOpenFile("External Appeal Data (*_ap.imo.unity3d)|*_ap.imo.unity3d");
+            var (path, ok) = SelectOpenFile("External Appeal Data (dan_*.unity3d)|dan_*.unity3d|External Appeal Data (*_ap.imo.unity3d)|*_ap.imo.unity3d");
 
             if (!ok) {
                 return;
@@ -400,7 +400,7 @@ namespace OpenMLTD.MillionDance {
 
                 if (cboOptAppealType.SelectedIndex > 0) {
                     if (!string.IsNullOrWhiteSpace(txtOptExternalDanceAppealFile.Text)) {
-                        if (!Regex.IsMatch(txtOptExternalDanceAppealFile.Text, @"dan_[a-z0-9]{5}[a-z0-9+]_ap\.imo\.unity3d$", RegexOptions.CultureInvariant)) {
+                        if (!Regex.IsMatch(txtOptExternalDanceAppealFile.Text, @"dan_[a-z0-9]{5}[a-z0-9+]_(?:0[12345](?:\.imo)?|ap\.imo)\.unity3d$", RegexOptions.CultureInvariant)) {
                             Alert($"File \"{txtOptExternalDanceAppealFile.Text}\" does not look like an external appeal data file from the game.");
                             return false;
                         }
