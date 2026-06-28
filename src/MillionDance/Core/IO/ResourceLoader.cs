@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
@@ -394,13 +394,13 @@ namespace OpenMLTD.MillionDance.Core.IO {
                         throw new ArgumentException("An object serialized as MonoBehaviour is actually not a MonoBehaviour.");
                     }
 
-                    if (behaviour.m_Name.EndsWith(defCamEnds)) {
+                    if (behaviour.m_Name.Contains(defCamEnds)) {
                         cam = serializer.Deserialize<CharacterImasMotionAsset>(behaviour);
-                    } else if (behaviour.m_Name.EndsWith(apaCamEnds)) {
+                    } else if (behaviour.m_Name.Contains(apaCamEnds)) {
                         apa = serializer.Deserialize<CharacterImasMotionAsset>(behaviour);
-                    } else if (behaviour.m_Name.EndsWith(apgCamEnds)) {
+                    } else if (behaviour.m_Name.Contains(apgCamEnds)) {
                         apg = serializer.Deserialize<CharacterImasMotionAsset>(behaviour);
-                    } else if (behaviour.m_Name.EndsWith(bpgCamEnds)) {
+                    } else if (behaviour.m_Name.Contains(bpgCamEnds)) {
                         bpg = serializer.Deserialize<CharacterImasMotionAsset>(behaviour);
                     }
 
@@ -410,7 +410,7 @@ namespace OpenMLTD.MillionDance.Core.IO {
                 }
             }
 
-            return cam != null && apa != null && apg != null && bpg != null;
+            return cam != null;
         }
 
         private static bool TryLoadFirstFoundCamera([NotNull] AssetsManager manager, [NotNull] ScriptableObjectSerializer serializer, [CanBeNull] ref CharacterImasMotionAsset cam, [CanBeNull] ref CharacterImasMotionAsset apa, [CanBeNull] ref CharacterImasMotionAsset apg, [CanBeNull] ref CharacterImasMotionAsset bpg) {
@@ -434,13 +434,13 @@ namespace OpenMLTD.MillionDance.Core.IO {
                         throw new ArgumentException("An object serialized as MonoBehaviour is actually not a MonoBehaviour.");
                     }
 
-                    if (behaviour.m_Name.EndsWith(defCamEnds)) {
+                    if (behaviour.m_Name.Contains(defCamEnds)) {
                         cam = serializer.Deserialize<CharacterImasMotionAsset>(behaviour);
-                    } else if (behaviour.m_Name.EndsWith(apaCamEnds) && !behaviour.m_Name.EndsWith(apaPortraitCamEnds)) {
+                    } else if (behaviour.m_Name.Contains(apaCamEnds) && !behaviour.m_Name.Contains(apaPortraitCamEnds)) {
                         apa = serializer.Deserialize<CharacterImasMotionAsset>(behaviour);
-                    } else if (behaviour.m_Name.EndsWith(apgCamEnds) && !behaviour.m_Name.EndsWith(apgPortraitCamEnds)) {
+                    } else if (behaviour.m_Name.Contains(apgCamEnds) && !behaviour.m_Name.Contains(apgPortraitCamEnds)) {
                         apg = serializer.Deserialize<CharacterImasMotionAsset>(behaviour);
-                    } else if (behaviour.m_Name.EndsWith(bpgCamEnds) && !behaviour.m_Name.EndsWith(bpgPortraitCamEnds)) {
+                    } else if (behaviour.m_Name.Contains(bpgCamEnds) && !behaviour.m_Name.Contains(bpgPortraitCamEnds)) {
                         bpg = serializer.Deserialize<CharacterImasMotionAsset>(behaviour);
                     }
 
@@ -450,7 +450,7 @@ namespace OpenMLTD.MillionDance.Core.IO {
                 }
             }
 
-            return cam != null && apa != null && apg != null && bpg != null;
+            return cam != null;
         }
 
         public static (SwayController Body, SwayController Head) LoadSwayControllers([NotNull] string bodyFilePath, [NotNull] string headFilePath) {
